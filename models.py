@@ -16,6 +16,8 @@ class Truck:
         self.wheelTorque = wheelTorque
         self.serviceHistory = []
 
+# Modelling the trailer.
+
 class Trailer:
     def __init__(self, id, make, reg, type, lastCheck):
         self.id = id

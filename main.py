@@ -1,32 +1,21 @@
 #!/usr/bin/env python3
 from tkinter import *
 import tkinter as tk
+from tkinter import messagebox
 
 from ctypes import windll
 windll.shcore.SetProcessDpiAwareness(1)
 import models
-"""
+
 vehicles = []
-app = Tk()
-my_label = Label(app, text="Vehicle:")
-my_label.pack(pady=20)
 
-my_entry = Entry(app)
-my_entry.pack()
-
-my_list = Listbox(app, width=50)
-my_list.pack(pady=40)
-
-app.title('Service Manager')
-app.geometry('700x350')
-"""""
 class MainFrame(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
         container = tk.Frame()
-        container.grid(row=0, column=0, sticky='nesw')
+        container.pack()
 
         self.id = tk.StringVar()
         self.id.set("Mister Smith")
@@ -34,92 +23,116 @@ class MainFrame(tk.Tk):
         self.listing = {}
 
         for p in (homePage, vehiclePage):
-            page_name = p.__name__
-            frame = p(parent = container, controller = self)
+            if p == homePage:
+                page_name = p.__name__
+                frame = p(parent = container, controller = self) # Frame is an instance of each page class.
+                frame.grid(row=0, column=0, sticky = 'nsew')
+                self.listing[page_name] = frame # We store the page name in a dictionary.
+
+        # We cant to create a series of pages, one for each individual truck / vehicle. 
+        # We want to do this here in the main frame. However, our vehicles haven't been made yet.
+
+        global allPages
+        allPages = {}
+
+        for i in range((len(vehicles))):
+            frame = vehiclePage(parent = container, controller = self, targetVehicle = vehicles[i]) # Creating an instance of the vehicle page class.
             frame.grid(row=0, column=0, sticky = 'nsew')
-            self.listing[page_name] = frame
-        
+            allPages[vehicles[i].reg] = frame
+
         self.up_frame('homePage')
         
     def up_frame(self, page_name):
         page = self.listing[page_name]
         page.tkraise()
 
+
 class homePage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.id = controller.id
+        
+        global homeController
+        homeController = controller
 
-        label = tk.Label(self, text = "Home page" + controller.id.get())
-        label.pack()
+        global my_label
+        my_label = tk.Label(self, text="Vehicle:")
+        my_label.pack(pady=20)
 
-        bou = tk.Button(self, text = "to vehicle page", command= lambda: controller.up_frame("vehiclePage"))
+        global my_entry
+        my_entry = tk.Entry(self, justify="center")
+        my_entry.pack()
 
-        bou.pack()
+        global my_list
+        my_list = tk.Listbox(self, width=50)
+        my_list.pack(pady=40)
+
 
 class vehiclePage(tk.Frame):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller, targetVehicle = None):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.id = controller.id
 
-        label = tk.Label(self, text = "Vehicle Page" + controller.id.get())
+        if targetVehicle is not None:
+            reg = targetVehicle.reg
+
+            regLabel = tk.Label(self, text= reg)
+            regLabel.pack(pady=20)
+
+        label = tk.Label(self, text = "Vehicle Page")
         label.pack()
 
         bou = tk.Button(self, text = "to home page", command=lambda: controller.up_frame("homePage"))
 
         bou.pack()
-    # Update entry box with listbox clicked
 
-    """
-    def fillout(e):
-        my_entry.delete(0, END)
 
-        # Add clicked list item to entry box
-        my_entry.insert(0, my_list.get(ACTIVE))
-    
-    # Check entry vs listbox
-    def check(e):
-        # grab what was typed
-        typed = my_entry.get()
-
-        if typed == '':
-            data = vehicles
-    
-        else:
-            data = []
-            for item in vehicles:
-                target = item.reg + " " + item.make + " " + item.model + " " + item.driver
-                if typed.lower() in target.lower():
-                    data.append(item)
-    
-        update(data)
-    
-    
-# Bindings
-    my_list.bind("<<ListboxSelect>>", fillout)
-
-    my_entry.bind("<KeyRelease>", check)
-    """
 def update(data):
-    # Clear the listbox
+            # Clear the listbox
     my_list.delete(0, END)
     
-    # Add toppings to listbox
+        # Add toppings to listbox
     for item in data:
         entry = item.reg + " " + item.make + " " + item.model + " " + item.driver
         my_list.insert(END, entry)
     
-def main():
+def fillout(e):
+    my_entry.delete(0, END)
 
-        x = MainFrame()
-        x.mainloop()
-        createObjects()
-        selection = 'valid'
+        # Add clicked list item to entry box
+    my_entry.insert(0, my_list.get(ACTIVE))
 
-        while(selection != "quit"):
-            selection = prompt()
+def check(e):
+    # grab what was typed
+    typed = my_entry.get()
+
+    if typed == '':
+        data = vehicles
+    
+    else:
+        data = []
+        for item in vehicles:
+            target = item.reg + " " + item.make + " " + item.model + " " + item.driver
+            if typed.lower() in target.lower():
+                data.append(item)
+    
+    update(data)
+
+def up_frame2(veh):
+    print("Trying to raise it")
+    veh.tkraise()
+
+def showPage(veh):
+    print("Double click detected.")
+    up_frame2(veh)
+
+def showSelected(e):
+    for i in my_list.curselection():
+        print(i)
+        print(my_list.get(i))
+        showPage(allPages[vehicles[i].reg])
 
 # Create the truck objects
 def createObjects():
@@ -135,8 +148,26 @@ def createObjects():
             vehicles.append(newObject)
 
             assert(isinstance(newObject, models.Truck))
-    
+
+def createBinds():
+    my_list.bind("<<ListboxSelect>>", fillout)
+    my_list.bind("<Double-Button-1>", showSelected)
+        
+    my_entry.bind("<KeyRelease>", check)
+
+def main():
+
+    createObjects()
+    x = MainFrame()
+    x.title('Service Manager')
+    x.geometry('1000x500')
     update(vehicles)
+    createBinds()
+    x.mainloop()
+    selection = 'valid'
+
+    while(selection != "quit"):
+        selection = prompt()
 
 # Prints the prompt
 def prompt():
