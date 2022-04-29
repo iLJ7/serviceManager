@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from tkinter import *
 import tkinter as tk
-from tkinter import messagebox
+from PIL import ImageTk, Image
 
 from ctypes import windll
 windll.shcore.SetProcessDpiAwareness(1)
@@ -77,12 +77,30 @@ class vehiclePage(tk.Frame):
 
         if targetVehicle is not None:
             reg = targetVehicle.reg
-
+        
             regLabel = tk.Label(self, text= reg)
             regLabel.pack(pady=20)
 
+            values = []
+
+            reg, make, model, color, driver = targetVehicle.reg, targetVehicle.make, targetVehicle.model, targetVehicle.color, targetVehicle.driver
+            lastService, chassisNo, serviceDueDate = targetVehicle.lastService, targetVehicle.chassisNo, targetVehicle.serviceDueDate
+            oilSpec, wheelTorque = targetVehicle.chassisNo, targetVehicle.wheelTorque
+
+            attributes = vars(targetVehicle)
+            values = " | ".join(attributes[key] for key in attributes)
+
+            myLabel = tk.Label(self, text=values)
+            myLabel.pack()
+
+        
+
         label = tk.Label(self, text = "Vehicle Page")
         label.pack()
+
+        self.photo = PhotoImage(file="restaurant.png")
+        self.labelphoto = Label(self, image = self.photo)
+        self.labelphoto.pack()
 
         bou = tk.Button(self, text = "to home page", command=lambda: controller.up_frame("homePage"))
 

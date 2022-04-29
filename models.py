@@ -14,7 +14,6 @@ class Truck:
         self.serviceDueDate = serviceDue
         self.oilSpec = oilSpec
         self.wheelTorque = wheelTorque
-        self.serviceHistory = []
 
 # Modelling the trailer.
 
