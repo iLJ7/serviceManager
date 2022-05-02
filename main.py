@@ -116,20 +116,19 @@ class vehiclePage(tk.Frame):
             text ="You are adding a service for: \n" + target.make + " | " + target.reg)
             intro.pack(in_=top, side=TOP, pady=(5, 0))
 
-            dateLabel = tk.Label(newWindow, text="Date of service: ")
-            dateLabel.pack(in_=middle, side=LEFT)
-
-            dateEntry = tk.Entry(newWindow)
-            dateEntry.pack(in_=middle, side=LEFT)
-
             typeLabel = tk.Label(newWindow, text="Type of service: ")
-            typeLabel.pack(in_=bottom, side=LEFT)
-            
-            typeEntry = tk.Entry(newWindow)
-            typeEntry.pack(in_=bottom, side=LEFT)
+            typeLabel.pack(in_=middle, side=LEFT)
 
+            typeEntry = tk.Entry(newWindow)
+            typeEntry.pack(in_=middle, side=LEFT)
+
+            costLabel = tk.Label(newWindow, text="Cost of service: ")
+            costLabel.pack(in_=bottom, side=LEFT)
             
-            submit = tk.Button(newWindow, text = "Submit", height=2, width=10) #command=lambda: openNewWindow())
+            costEntry = tk.Entry(newWindow)
+            costEntry.pack(in_=bottom, side=LEFT, padx=(2.5, 0))
+
+            submit = tk.Button(newWindow, text = "Submit", height=2, width=10, command = lambda: [db.insert(typeEntry.get(), costEntry.get()), newWindow.destroy()])
 
             submit.pack(in_=submitArea, side=TOP, pady=(10, 0))
 
@@ -192,9 +191,6 @@ def showSelected(e):
 
         showPage(allPages[target.reg])
 
-
-db = Database('store.db')
-
 # Create the truck objects
 def createObjects():
     
@@ -222,6 +218,9 @@ def prompt():
     return selection
 
 def main():
+    
+    global db
+    db = Database('store.db')
 
     createObjects()
     x = MainFrame()

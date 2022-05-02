@@ -26,6 +26,3 @@ class Database:
     
     def __del__(self):
         self.conn.close()
-
-# db = Database('store.db')
-# db.insert("Oil Change", "100")
