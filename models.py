@@ -3,7 +3,7 @@
 # Modelling the truck.
 
 class Truck:
-    def __init__(self, reg, make, model, color, driver, lastService, chassisNo, serviceDue, oilSpec, wheelTorque):
+    def __init__(self, reg, make, model, color, driver, lastService, chassisNo, serviceDue, oilSpec, wheelTorque, image):
         self.reg = reg
         self.make = make
         self.model = model
@@ -14,6 +14,7 @@ class Truck:
         self.serviceDueDate = serviceDue
         self.oilSpec = oilSpec
         self.wheelTorque = wheelTorque
+        self.image = image.strip()
 
 # Modelling the trailer.
 

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+from hashlib import new
 from tkinter import *
 import tkinter as tk
 from PIL import ImageTk, Image
+from db import Database
 
 from ctypes import windll
 windll.shcore.SetProcessDpiAwareness(1)
@@ -17,8 +19,8 @@ class MainFrame(tk.Tk):
         container = tk.Frame()
         container.pack()
 
-        self.id = tk.StringVar()
-        self.id.set("Mister Smith")
+        #self.id = tk.StringVar()
+        #self.id.set("Mister Smith")
 
         self.listing = {}
 
@@ -51,17 +53,17 @@ class homePage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.id = controller.id
+        #self.id = controller.id
         
         global homeController
         homeController = controller
 
         global my_label
         my_label = tk.Label(self, text="Vehicle:")
-        my_label.pack(pady=20)
+        my_label.pack(pady=(20,0))
 
         global my_entry
-        my_entry = tk.Entry(self, justify="center")
+        my_entry = tk.Entry(self)
         my_entry.pack()
 
         global my_list
@@ -73,7 +75,7 @@ class vehiclePage(tk.Frame):
     def __init__(self, parent, controller, targetVehicle = None):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.id = controller.id
+        #self.id = controller.id
 
         if targetVehicle is not None:
             reg = targetVehicle.reg
@@ -92,20 +94,52 @@ class vehiclePage(tk.Frame):
 
             myLabel = tk.Label(self, text=values)
             myLabel.pack()
-
         
 
-        label = tk.Label(self, text = "Vehicle Page")
-        label.pack()
+        def openNewWindow():
+            newWindow = Toplevel(controller)
+            newWindow.title="Add Service"
+            newWindow.geometry("500x300")
 
-        self.photo = PhotoImage(file="restaurant.png")
-        self.labelphoto = Label(self, image = self.photo)
-        self.labelphoto.pack()
 
-        bou = tk.Button(self, text = "to home page", command=lambda: controller.up_frame("homePage"))
+            top = Frame(newWindow)
+            bottom = Frame(newWindow)
+            middle = Frame(newWindow)
+            submitArea = Frame(newWindow)
 
-        bou.pack()
+            top.pack(side=TOP)
+            submitArea.pack(side=BOTTOM, fill=BOTH, expand=True)
+            bottom.pack(side=BOTTOM, fill=BOTH, expand=True)
+            middle.pack(side=BOTTOM, fill=BOTH, expand=True)
 
+            intro = tk.Label(newWindow,
+            text ="You are adding a service for: \n" + target.make + " | " + target.reg)
+            intro.pack(in_=top, side=TOP, pady=(5, 0))
+
+            dateLabel = tk.Label(newWindow, text="Date of service: ")
+            dateLabel.pack(in_=middle, side=LEFT)
+
+            dateEntry = tk.Entry(newWindow)
+            dateEntry.pack(in_=middle, side=LEFT)
+
+            typeLabel = tk.Label(newWindow, text="Type of service: ")
+            typeLabel.pack(in_=bottom, side=LEFT)
+            
+            typeEntry = tk.Entry(newWindow)
+            typeEntry.pack(in_=bottom, side=LEFT)
+
+            
+            submit = tk.Button(newWindow, text = "Submit", height=2, width=10) #command=lambda: openNewWindow())
+
+            submit.pack(in_=submitArea, side=TOP, pady=(10, 0))
+
+        addServ = tk.Button(self, text = "Add Service", command=lambda: openNewWindow())
+
+        addServ.pack(pady=(20))
+
+        bou = tk.Button(self, text = "Main Menu", command=lambda: controller.up_frame("homePage"))
+
+        bou.pack(pady=(20))
 
 def update(data):
             # Clear the listbox
@@ -139,7 +173,6 @@ def check(e):
     update(data)
 
 def up_frame2(veh):
-    print("Trying to raise it")
     veh.tkraise()
 
 def showPage(veh):
@@ -150,7 +183,17 @@ def showSelected(e):
     for i in my_list.curselection():
         print(i)
         print(my_list.get(i))
-        showPage(allPages[vehicles[i].reg])
+        selection = my_list.get(i)
+        
+        global target
+        for j in range(len(vehicles)):
+            if vehicles[j].reg == selection.split()[0]:
+                target = vehicles[j]
+
+        showPage(allPages[target.reg])
+
+
+db = Database('store.db')
 
 # Create the truck objects
 def createObjects():
@@ -160,9 +203,9 @@ def createObjects():
         for line in x:
             inf = line.split(" ")
             reg, make, model, color, driver = inf[0], inf[1], inf[2], inf[3], inf[4]
-            lastService, chassisNo, serviceDue, oilSpec, wheelTorque = inf[5], inf[6], inf[7], inf[8], inf[9]
+            lastService, chassisNo, serviceDue, oilSpec, wheelTorque, img = inf[5], inf[6], inf[7], inf[8], inf[9], inf[10]
 
-            newObject = models.Truck(reg, make, model, color, driver, lastService, chassisNo, serviceDue, oilSpec, wheelTorque)
+            newObject = models.Truck(reg, make, model, color, driver, lastService, chassisNo, serviceDue, oilSpec, wheelTorque, img)
             vehicles.append(newObject)
 
             assert(isinstance(newObject, models.Truck))
@@ -170,8 +213,13 @@ def createObjects():
 def createBinds():
     my_list.bind("<<ListboxSelect>>", fillout)
     my_list.bind("<Double-Button-1>", showSelected)
-        
     my_entry.bind("<KeyRelease>", check)
+
+# Prints the prompt
+def prompt():
+    print("Quit using the X on the program:")
+    selection = input()
+    return selection
 
 def main():
 
@@ -179,6 +227,10 @@ def main():
     x = MainFrame()
     x.title('Service Manager')
     x.geometry('1000x500')
+
+    x.grid_rowconfigure(0, weight=1)
+    x.grid_columnconfigure(0, weight=1)
+
     update(vehicles)
     createBinds()
     x.mainloop()
@@ -186,12 +238,6 @@ def main():
 
     while(selection != "quit"):
         selection = prompt()
-
-# Prints the prompt
-def prompt():
-    print("Quit using the X on the program:")
-    selection = input()
-    return selection
 
 if __name__ == '__main__':
     main()
