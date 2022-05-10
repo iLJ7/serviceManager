@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-from hashlib import new
 from tkinter import *
+from PIL import ImageTk, Image
+from tkinter import font
 import tkinter as tk
 from PIL import ImageTk, Image
 from db import Database
+from datetime import datetime
 
 from ctypes import windll
 windll.shcore.SetProcessDpiAwareness(1)
@@ -12,7 +14,6 @@ import models
 vehicles = []
 
 class MainFrame(tk.Tk):
-
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
@@ -31,9 +32,6 @@ class MainFrame(tk.Tk):
                 frame.grid(row=0, column=0, sticky = 'nsew')
                 self.listing[page_name] = frame # We store the page name in a dictionary.
 
-        # We cant to create a series of pages, one for each individual truck / vehicle. 
-        # We want to do this here in the main frame. However, our vehicles haven't been made yet.
-
         global allPages
         allPages = {}
 
@@ -42,12 +40,12 @@ class MainFrame(tk.Tk):
             frame.grid(row=0, column=0, sticky = 'nsew')
             allPages[vehicles[i].reg] = frame
 
+        allPages['serviceHistory'] = vehiclePage(parent = container, controller = self)
         self.up_frame('homePage')
         
     def up_frame(self, page_name):
         page = self.listing[page_name]
         page.tkraise()
-
 
 class homePage(tk.Frame):
     def __init__(self, parent, controller):
@@ -59,17 +57,36 @@ class homePage(tk.Frame):
         homeController = controller
 
         global my_label
-        my_label = tk.Label(self, text="Vehicle:")
+        my_label = tk.Label(self, text="Vehicle:", font=('Arial', 30))
         my_label.pack(pady=(20,0))
 
         global my_entry
-        my_entry = tk.Entry(self)
+        my_entry = tk.Entry(self, font=('Verdana', 30))
         my_entry.pack()
 
         global my_list
-        my_list = tk.Listbox(self, width=50)
+        my_list = tk.Listbox(self, width=50, font=('Arial', 30))
         my_list.pack(pady=40)
 
+class servicePage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+
+        serviceLabel = tk.Label(self, text= target.reg)
+        serviceLabel.pack(pady=20)
+
+        lst = []
+        for service in db.fetch():
+            if service[1] == target.reg:
+                lst.append(" ".join(service[1:]))
+        
+        lst = "\n".join(lst)
+        serviceItems = Label(self, text=lst)
+        serviceItems.pack()
+
+        home = tk.Button(self, text = "Main Menu", command=lambda: controller.up_frame("homePage"))
+        home.pack(pady=(20), padx=(10))
 
 class vehiclePage(tk.Frame):
     def __init__(self, parent, controller, targetVehicle = None):
@@ -78,23 +95,36 @@ class vehiclePage(tk.Frame):
         #self.id = controller.id
 
         if targetVehicle is not None:
-            reg = targetVehicle.reg
-        
-            regLabel = tk.Label(self, text= reg)
+           
+            self.reg = targetVehicle.reg
+            
+            regLabel = tk.Label(self, text= self.reg, font=('Arial', 22))
             regLabel.pack(pady=20)
 
             values = []
 
-            reg, make, model, color, driver = targetVehicle.reg, targetVehicle.make, targetVehicle.model, targetVehicle.color, targetVehicle.driver
-            lastService, chassisNo, serviceDueDate = targetVehicle.lastService, targetVehicle.chassisNo, targetVehicle.serviceDueDate
-            oilSpec, wheelTorque = targetVehicle.chassisNo, targetVehicle.wheelTorque
-
             attributes = vars(targetVehicle)
             values = " | ".join(attributes[key] for key in attributes)
 
-            myLabel = tk.Label(self, text=values)
+            myLabel = tk.Label(self, text=values, font=('Arial', 22))
             myLabel.pack()
+
+            frame = Frame(self)
+            frame.pack(side=TOP, expand=True)
+            self.img = Image.open(targetVehicle.image)
+            resized_image = self.img.resize((300, 300))
+            self.img = ImageTk.PhotoImage(resized_image)
+
+            # Create a Label Widget to display the text or Image
+            self.label = Label(frame, image = self.img)
+            self.label.pack()
         
+        def createServicePage():
+            frame = servicePage(parent, controller)
+            frame.grid(row=0, column=0, sticky = 'nsew')
+            allPages['servicesPage'] = frame
+            showPage(frame)
+
 
         def openNewWindow():
             newWindow = Toplevel(controller)
@@ -128,18 +158,30 @@ class vehiclePage(tk.Frame):
             costEntry = tk.Entry(newWindow)
             costEntry.pack(in_=bottom, side=LEFT, padx=(2.5, 0))
 
-            submit = tk.Button(newWindow, text = "Submit", height=2, width=10, command = lambda: [db.insert(typeEntry.get(), costEntry.get()), newWindow.destroy()])
+            today = datetime.now()
+            today = today.strftime("%d/%m/%Y %H:%M:%S")
+            print(today)
+            submit = tk.Button(newWindow, text = "Submit", height=2, width=10, command = lambda: [db.insert(today, self.reg, typeEntry.get(), costEntry.get()), newWindow.destroy()])
 
             submit.pack(in_=submitArea, side=TOP, pady=(10, 0))
+        
+        buttons = Frame(self)
+        buttons.pack(side=BOTTOM, expand=True)
+
+        myFont = font.Font(family='Arial', size=22)
 
         addServ = tk.Button(self, text = "Add Service", command=lambda: openNewWindow())
+        addServ['font'] = myFont
+        addServ.pack(in_=buttons, side=LEFT, pady=(20), padx=(10))
 
-        addServ.pack(pady=(20))
+        viewServ = tk.Button(self, text="View Services", command=lambda: createServicePage())
+        viewServ['font'] = myFont
+        viewServ.pack(in_=buttons, side=LEFT, pady=(20), padx=(10))
 
         bou = tk.Button(self, text = "Main Menu", command=lambda: controller.up_frame("homePage"))
-
-        bou.pack(pady=(20))
-
+        bou['font'] = myFont
+        bou.pack(in_=buttons, side=LEFT, pady=(20), padx=(10))
+        
 def update(data):
             # Clear the listbox
     my_list.delete(0, END)
@@ -171,12 +213,9 @@ def check(e):
     
     update(data)
 
-def up_frame2(veh):
-    veh.tkraise()
-
 def showPage(veh):
     print("Double click detected.")
-    up_frame2(veh)
+    veh.tkraise()
 
 def showSelected(e):
     for i in my_list.curselection():
@@ -224,12 +263,9 @@ def main():
 
     createObjects()
     x = MainFrame()
+    x.state("zoomed")
     x.title('Service Manager')
     x.geometry('1000x500')
-
-    x.grid_rowconfigure(0, weight=1)
-    x.grid_columnconfigure(0, weight=1)
-
     update(vehicles)
     createBinds()
     x.mainloop()

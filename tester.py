@@ -1,21 +1,22 @@
-import tkinter as tk
+# Import required libraries
+from tkinter import *
+from PIL import ImageTk, Image
 
-app = tk.Tk()
-app.geometry('1000x500')
-top = tk.Frame(app)
-bottom = tk.Frame(app)
-top.pack(side=tk.TOP, pady=(20, 0))
-bottom.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+# Create an instance of tkinter window
+win = Tk()
 
-b = tk.Button(app, text="Enter", width=10, height=2)
-c = tk.Button(app, text="Clear", width=10, height=2)
-b.pack(in_=top, side=tk.LEFT)
-c.pack(in_=top, side=tk.LEFT)
+# Define the geometry of the window
+win.geometry("700x500")
 
-text = tk.Text(app, width=35, height=15)
-scrollbar = tk.Scrollbar(app)
-text.config(yscrollcommand=scrollbar.set)
-scrollbar.pack(in_=bottom, side=tk.RIGHT, fill=tk.Y)
-text.pack(in_=bottom, side=tk.LEFT, fill=tk.BOTH, expand=True)
+frame = Frame(win, width=600, height=400)
+frame.pack()
+frame.place(anchor='center', relx=0.5, rely=0.5)
 
-app.mainloop()
+# Create an object of tkinter ImageTk
+img = ImageTk.PhotoImage(Image.open("v.png"))
+
+# Create a Label Widget to display the text or Image
+label = Label(frame, image = img)
+label.pack()
+
+win.mainloop()
