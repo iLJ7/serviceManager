@@ -277,7 +277,7 @@ def changeDriver():
     string_list[index] = string_list[index] + "\n"
     print("Current driver: " + target.driver + " New driver: " + newDriversTruck.driver)
     
-    my_file = open("tester.txt", "w")
+    my_file = open("data.txt", "w")
     my_file.write("".join(string_list))
     my_file.close()
 
