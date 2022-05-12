@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import string
 from tkinter import *
 from PIL import ImageTk, Image
 from tkinter import font
@@ -124,13 +125,40 @@ class vehiclePage(tk.Frame):
             frame.grid(row=0, column=0, sticky = 'nsew')
             allPages['servicesPage'] = frame
             showPage(frame)
+        
+        def changeDriverWindow():
+            newWindow = Toplevel(controller)
+            newWindow.title="Change Driver"
+            newWindow.geometry("500x400")
 
+            top = Frame(newWindow)
+            bottom = Frame(newWindow)
+
+            top.pack(side=TOP)
+            intro = tk.Label(newWindow,
+            text ="You are changing the driver for: \n" + target.make + " | " + target.reg + "\nThe current driver is: " + target.driver)
+            intro.pack(in_=top, side=TOP, pady=(5, 0))
+
+            bottom.pack(side=BOTTOM)
+
+            global driver_list
+            driver_list = tk.Listbox(newWindow, width=50, font=('Arial', 30))
+            submit = tk.Button(newWindow, text = "Change Driver", height=3, width=15, command = lambda: [changeDriver(), newWindow.destroy()])
+            submit.pack(in_=bottom, side=TOP, pady=(0, 20))
+
+            drivers = []
+            for veh in vehicles:
+                drivers.append(veh.driver)
+
+            for item in drivers:
+                driver_list.insert(END, item)
+
+            driver_list.pack(pady=40)
 
         def openNewWindow():
             newWindow = Toplevel(controller)
             newWindow.title="Add Service"
             newWindow.geometry("500x300")
-
 
             top = Frame(newWindow)
             bottom = Frame(newWindow)
@@ -178,19 +206,23 @@ class vehiclePage(tk.Frame):
         viewServ['font'] = myFont
         viewServ.pack(in_=buttons, side=LEFT, pady=(20), padx=(10))
 
+        changeDriv = tk.Button(self, text = "Change Driver", command=lambda: changeDriverWindow())
+        changeDriv['font'] = myFont
+        changeDriv.pack(in_=buttons, side=LEFT, pady=(20), padx=(10))
+
         bou = tk.Button(self, text = "Main Menu", command=lambda: controller.up_frame("homePage"))
         bou['font'] = myFont
         bou.pack(in_=buttons, side=LEFT, pady=(20), padx=(10))
         
 def update(data):
-            # Clear the listbox
+        # Clear the listbox
     my_list.delete(0, END)
     
         # Add toppings to listbox
     for item in data:
         entry = item.reg + " " + item.make + " " + item.model + " " + item.driver
         my_list.insert(END, entry)
-    
+
 def fillout(e):
     my_entry.delete(0, END)
 
@@ -212,6 +244,42 @@ def check(e):
                 data.append(item)
     
     update(data)
+
+def changeDriver():
+    for i in driver_list.curselection():
+        global selection
+        selection = driver_list.get(i)
+        print("Selection: " + selection)
+
+        location = 0
+        global newDriversTruck
+        for j in range(len(vehicles)):
+            if vehicles[j].driver == selection:
+                newDriversTruck = vehicles[j]
+                location = j
+
+    # To change the driver, the text file needs to be changed.
+    # The target vehicle's driver field needs to be changed.
+    my_file = open("data.txt")
+    string_list = my_file.readlines()
+    my_file.close()
+
+    global index
+
+    for i in range(len(string_list)):
+        if string_list[i].split()[4] == target.driver:
+            index = i
+
+    listToChange = string_list[index].split()
+    listToChange[4] = selection
+
+    string_list[index] = " ".join(listToChange)
+    string_list[index] = string_list[index] + "\n"
+    print("Current driver: " + target.driver + " New driver: " + newDriversTruck.driver)
+    
+    my_file = open("tester.txt", "w")
+    my_file.write("".join(string_list))
+    my_file.close()
 
 def showPage(veh):
     print("Double click detected.")
