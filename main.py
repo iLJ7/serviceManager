@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from tkinter import *
+import settings
 from PIL import ImageTk, Image
 from tkinter import font
 import tkinter as tk
@@ -36,7 +37,7 @@ class MainFrame(tk.Tk):
                 self.listing[page_name] = frame # We store the page name in a dictionary.
 
         global allPages
-        allPages = {}
+        allPages = settings.allPages
 
         for i in range((len(vehicles))):
             frame = vehiclePage(parent = container, controller = self, targetVehicle = vehicles[i]) # Creating an instance of the vehicle page class.
@@ -214,20 +215,28 @@ class vehiclePage(tk.Frame):
         bou = tk.Button(self, text = "Main Menu", command=lambda: controller.up_frame("homePage"))
         bou['font'] = myFont
         bou.pack(in_=buttons, side=LEFT, pady=(20), padx=(10))
-        
-def update(data):
-        # Clear the listbox
+
+def initialListboxPopulate():
     my_list.delete(0, END)
     
-        # Add toppings to listbox
+    trucks = truckdb.fetch()
+
+    for truck in trucks:
+        truck = " ".join(truck)
+        my_list.insert(END, truck)
+
+def update(data):
+    # Clear the listbox
+    my_list.delete(0, END)
+    
+    # Add toppings to listbox
     for item in data:
-        entry = item.reg + " " + item.make + " " + item.model + " " + item.driver
-        my_list.insert(END, entry)
+        my_list.insert(END, item)
 
 def fillout(e):
     my_entry.delete(0, END)
 
-        # Add clicked list item to entry box
+    # Add clicked list item to entry box
     my_entry.insert(0, my_list.get(ACTIVE))
 
 def check(e):
@@ -235,14 +244,22 @@ def check(e):
     typed = my_entry.get()
 
     if typed == '':
-        data = vehicles
+        trucks = truckdb.fetch()
+        newTrucks = []
+
+        for truck in trucks:
+            truck = " ".join(truck)
+            newTrucks.append(truck)
     
+        data = newTrucks
+
     else:
+        trucks = truckdb.fetch()
         data = []
-        for item in vehicles:
-            target = item.reg + " " + item.make + " " + item.model + " " + item.driver
+        for truck in trucks:
+            target = " ".join(truck)
             if typed.lower() in target.lower():
-                data.append(item)
+                data.append(target)
     
     update(data)
 
@@ -251,36 +268,14 @@ def changeDriver():
         global selection
         selection = driver_list.get(i)
         print("Selection: " + selection)
-
-        location = 0
-        global newDriversTruck
-        newDriversTruck = vehicles[0]
-        for j in range(len(vehicles)):
-            if vehicles[j].driver == selection:
-                newDriversTruck = vehicles[j]
-                location = j
-
-    # To change the driver, we access the database.
-    my_file = open("data.txt")
-    string_list = my_file.readlines()
-    my_file.close()
-
-    global index
-
-    for i in range(len(string_list)):
-        if string_list[i].split()[4] == target.driver:
-            index = i
-
-    listToChange = string_list[index].split()
-    listToChange[4] = selection
-
-    string_list[index] = " ".join(listToChange)
-    string_list[index] = string_list[index] + "\n"
-    print("Current driver: " + target.driver + " New driver: " + newDriversTruck.driver)
     
-    my_file = open("data.txt", "w")
-    my_file.write("".join(string_list))
-    my_file.close()
+    print("Current driver: " + target.driver)
+    
+    truckdb.update(target.reg, selection)
+
+    initialListboxPopulate()
+    
+    # To change the driver, we access the database.
 
 def showPage(veh):
     print("Double click detected.")
@@ -296,6 +291,7 @@ def showSelected(e):
         for j in range(len(vehicles)):
             if vehicles[j].reg == selection.split()[0]:
                 target = vehicles[j]
+        
 
         showPage(allPages[target.reg])
 
@@ -353,7 +349,7 @@ def main():
     x.state("zoomed")
     x.title('Service Manager')
     x.geometry('1000x500')
-    update(vehicles)
+    initialListboxPopulate()
     createBinds()
     x.mainloop()
     selection = 'valid'
