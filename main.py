@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-import string
 from tkinter import *
 from PIL import ImageTk, Image
 from tkinter import font
 import tkinter as tk
 from PIL import ImageTk, Image
-from db import Database
+from serviceDB import serviceDB
 from datetime import datetime
 
 from ctypes import windll
+
+from truckDB import truckDB
 windll.shcore.SetProcessDpiAwareness(1)
 import models
 
 vehicles = []
+drivers = []
 
 class MainFrame(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -78,9 +80,12 @@ class servicePage(tk.Frame):
         serviceLabel.pack(pady=20)
 
         lst = []
-        for service in db.fetch():
-            if service[1] == target.reg:
+        for service in servdb.fetch():
+            print("Service: " + " ".join(service[1:]))
+            if service[2].lower() == target.reg.lower():
                 lst.append(" ".join(service[1:]))
+            
+        print(lst)
         
         lst = "\n".join(lst)
         serviceItems = Label(self, text=lst)
@@ -146,10 +151,6 @@ class vehiclePage(tk.Frame):
             submit = tk.Button(newWindow, text = "Change Driver", height=3, width=15, command = lambda: [changeDriver(), newWindow.destroy()])
             submit.pack(in_=bottom, side=TOP, pady=(0, 20))
 
-            drivers = []
-            for veh in vehicles:
-                drivers.append(veh.driver)
-
             for item in drivers:
                 driver_list.insert(END, item)
 
@@ -189,7 +190,7 @@ class vehiclePage(tk.Frame):
             today = datetime.now()
             today = today.strftime("%d/%m/%Y %H:%M:%S")
             print(today)
-            submit = tk.Button(newWindow, text = "Submit", height=2, width=10, command = lambda: [db.insert(today, self.reg, typeEntry.get(), costEntry.get()), newWindow.destroy()])
+            submit = tk.Button(newWindow, text = "Submit", height=2, width=10, command = lambda: [servdb.insert(today, self.reg, typeEntry.get(), costEntry.get()), newWindow.destroy()])
 
             submit.pack(in_=submitArea, side=TOP, pady=(10, 0))
         
@@ -253,13 +254,13 @@ def changeDriver():
 
         location = 0
         global newDriversTruck
+        newDriversTruck = vehicles[0]
         for j in range(len(vehicles)):
             if vehicles[j].driver == selection:
                 newDriversTruck = vehicles[j]
                 location = j
 
-    # To change the driver, the text file needs to be changed.
-    # The target vehicle's driver field needs to be changed.
+    # To change the driver, we access the database.
     my_file = open("data.txt")
     string_list = my_file.readlines()
     my_file.close()
@@ -310,9 +311,24 @@ def createObjects():
 
             newObject = models.Truck(reg, make, model, color, driver, lastService, chassisNo, serviceDue, oilSpec, wheelTorque, img)
             vehicles.append(newObject)
-
+                
             assert(isinstance(newObject, models.Truck))
+    
+    with open('drivers.txt') as f:
+        x = f.readlines()
+        for line in x:
+            drivers.append(line.strip())
 
+def createTruckDB():
+    
+    with open('data.txt') as f:
+        x = f.readlines()
+        for line in x:
+            inf = line.split(" ")
+            reg, make, model, color, driver = inf[0], inf[1], inf[2], inf[3], inf[4]
+
+            truckdb.insert(reg, make, model, color, driver)
+    
 def createBinds():
     my_list.bind("<<ListboxSelect>>", fillout)
     my_list.bind("<Double-Button-1>", showSelected)
@@ -326,9 +342,12 @@ def prompt():
 
 def main():
     
-    global db
-    db = Database('store.db')
+    global servdb
+    servdb = serviceDB('store.db')
 
+    global truckdb
+    truckdb = truckDB('trucks.db')
+    
     createObjects()
     x = MainFrame()
     x.state("zoomed")
