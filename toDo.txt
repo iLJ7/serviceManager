@@ -1,2 +1,1 @@
-1. Prevent user from opening multiple Toplevel windows (e.g. can't have 2 add service/change driver windows). if not newWindow, drivWindow etc may work.
 2. Style.

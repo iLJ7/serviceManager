@@ -1,22 +1,37 @@
-# Import required libraries
+# importing everything from tkinter
 from tkinter import *
-from PIL import ImageTk, Image
-
-# Create an instance of tkinter window
-win = Tk()
-
-# Define the geometry of the window
-win.geometry("700x500")
-
-frame = Frame(win, width=600, height=400)
-frame.pack()
-frame.place(anchor='center', relx=0.5, rely=0.5)
-
-# Create an object of tkinter ImageTk
-img = ImageTk.PhotoImage(Image.open("v.png"))
-
-# Create a Label Widget to display the text or Image
-label = Label(frame, image = img)
-label.pack()
-
-win.mainloop()
+ 
+# creating the tkinter window
+Main_window = Tk()
+ 
+# variable
+my_text = "GeeksforGeeks updated !!!"
+ 
+# function define for
+# updating the my_label
+# widget content
+def counter():
+   
+    # use global variable
+    global my_text
+     
+    # configure
+    my_label.config(text = my_text)
+ 
+# create a button widget and attached  
+# with counter function  
+my_button = Button(Main_window,
+                   text = "Please update",
+                   command = counter)
+ 
+# create a Label widget
+my_label = Label(Main_window,
+                 text = "geeksforgeeks")
+ 
+# place the widgets
+# in the gui window
+my_label.pack()
+my_button.pack()
+ 
+# Start the GUI
+Main_window.mainloop()

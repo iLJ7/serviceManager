@@ -20,8 +20,12 @@ class truckDB:
         self.cur.execute("DELETE FROM trucks WHERE reg = ?", (reg,))
         self.conn.commit()
     
-    def update(self, reg, driver):
+    def updateDriver(self, reg, driver):
         self.cur.execute("UPDATE trucks SET driver = ? WHERE reg = ?", (driver, reg))
+        self.conn.commit()
+    
+    def updateColor(self, reg, color):
+        self.cur.execute("UPDATE trucks SET color = ? WHERE reg = ?", (color, reg))
         self.conn.commit()
 
 global truckdb

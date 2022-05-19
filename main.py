@@ -16,6 +16,7 @@ import models
 
 vehicles = []
 drivers = []
+colors = []
 
 class MainFrame(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -23,9 +24,6 @@ class MainFrame(tk.Tk):
 
         container = tk.Frame()
         container.pack()
-
-        #self.id = tk.StringVar()
-        #self.id.set("Mister Smith")
 
         self.listing = {}
 
@@ -99,23 +97,26 @@ class vehiclePage(tk.Frame):
     def __init__(self, parent, controller, targetVehicle = None):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        #self.id = controller.id
-
+        
         if targetVehicle is not None:
            
             self.reg = targetVehicle.reg
             
+            details = truckdb.fetch()
+            global targetIndex
+            print(details)
+            for i in range(len(details)):
+                if details[i][0] == targetVehicle.reg:
+                    txt = details[i]
+                    targetIndex = i
+
             regLabel = tk.Label(self, text= self.reg, font=('Arial', 22))
             regLabel.pack(pady=20)
 
-            values = []
+            self.myLabel = tk.Label(self, text=txt, font=('Arial', 22))
+            self.myLabel.pack()
 
-            attributes = vars(targetVehicle)
-            values = " | ".join(attributes[key] for key in attributes)
-
-            myLabel = tk.Label(self, text=values, font=('Arial', 22))
-            myLabel.pack()
-
+            #self.myLabel.config(text=txt)
             frame = Frame(self)
             frame.pack(side=TOP, expand=True)
             self.img = Image.open(targetVehicle.image)
@@ -141,8 +142,13 @@ class vehiclePage(tk.Frame):
             bottom = Frame(newWindow)
 
             top.pack(side=TOP)
+
+            details = truckdb.fetch()
+
+            x = findTargetIndex()
+
             intro = tk.Label(newWindow,
-            text ="You are changing the driver for: \n" + target.make + " | " + target.reg + "\nThe current driver is: " + target.driver)
+            text ="You are changing the driver for: \n" + details[x][0] + " | " + details[x][1] + "\nThe current driver is: " + details[x][4])
             intro.pack(in_=top, side=TOP, pady=(5, 0))
 
             bottom.pack(side=BOTTOM)
@@ -156,6 +162,34 @@ class vehiclePage(tk.Frame):
                 driver_list.insert(END, item)
 
             driver_list.pack(pady=40)
+        
+        def changeColorWindow():
+            newWindow = Toplevel(controller)
+            newWindow.title="Change Color"
+            newWindow.geometry("500x400")
+
+            top = Frame(newWindow)
+            bottom = Frame(newWindow)
+            
+            details = truckdb.fetch()
+            x = findTargetIndex()
+            top.pack(side=TOP)
+            intro = tk.Label(newWindow,
+            text ="You are changing the colour for: \n" + details[x][0] + " | " + details[x][1] + "\nThe current colour is: " + details[x][3])
+
+            intro.pack(in_=top, side=TOP, pady=(5, 0))
+
+            bottom.pack(side=BOTTOM)
+
+            global color_list
+            color_list = tk.Listbox(newWindow, width=50, font=('Arial', 30))
+            submit = tk.Button(newWindow, text = "Change Color", height=3, width=15, command = lambda: [changeColor(), newWindow.destroy()])
+            submit.pack(in_=bottom, side=TOP, pady=(0, 20))
+
+            for item in colors:
+                color_list.insert(END, item)
+
+            color_list.pack(pady=40)
 
         def openNewWindow():
             newWindow = Toplevel(controller)
@@ -212,6 +246,10 @@ class vehiclePage(tk.Frame):
         changeDriv['font'] = myFont
         changeDriv.pack(in_=buttons, side=LEFT, pady=(20), padx=(10))
 
+        changeCol = tk.Button(self, text = "Change Color", command=lambda: changeColorWindow())
+        changeCol['font'] = myFont
+        changeCol.pack(in_=buttons, side=LEFT, pady=(20), padx=(10))
+
         bou = tk.Button(self, text = "Main Menu", command=lambda: controller.up_frame("homePage"))
         bou['font'] = myFont
         bou.pack(in_=buttons, side=LEFT, pady=(20), padx=(10))
@@ -263,19 +301,60 @@ def check(e):
     
     update(data)
 
+def findTargetIndex():
+    details = truckdb.fetch()
+    global targetIndex
+    print(details)
+    for i in range(len(details)):
+        if details[i][0] == target.reg:
+            targetIndex = i
+    
+    return targetIndex
+
 def changeDriver():
     for i in driver_list.curselection():
-        global selection
-        selection = driver_list.get(i)
-        print("Selection: " + selection)
+        global driverSelection
+        driverSelection = driver_list.get(i)
+        print("Selection: " + driverSelection)
     
     print("Current driver: " + target.driver)
     
-    truckdb.update(target.reg, selection)
+    truckdb.updateDriver(target.reg, driverSelection)
+
+    initialListboxPopulate()
+
+    details = truckdb.fetch()
+    for d in details:
+        if d[0] == target.reg:
+            txt = d
+    
+    frame = allPages[target.reg]
+    frame.myLabel.config(text=txt)
+
+    showPage(allPages[target.reg])
+
+def changeColor():
+    for i in color_list.curselection():
+        global colorSelection
+        colorSelection = color_list.get(i)
+        print("Selection: " + colorSelection)
+
+    print("Current color: " + target.color)
+
+    truckdb.updateColor(target.reg, colorSelection)
 
     initialListboxPopulate()
     
-    # To change the driver, we access the database.
+    
+    details = truckdb.fetch()
+    for d in details:
+        if d[0] == target.reg:
+            txt = d
+    
+    frame = allPages[target.reg]
+    frame.myLabel.config(text=txt)
+
+    showPage(allPages[target.reg])
 
 def showPage(veh):
     print("Double click detected.")
@@ -314,6 +393,11 @@ def createObjects():
         x = f.readlines()
         for line in x:
             drivers.append(line.strip())
+
+    with open('colors.txt') as f:
+        x = f.readlines()
+        for line in x:
+            colors.append(line.strip())
 
 def createTruckDB():
     
