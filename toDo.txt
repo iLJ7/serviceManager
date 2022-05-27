@@ -1,1 +1,2 @@
-2. Style.
+1. Full screen navbar.
+2. Buttons for each truck.

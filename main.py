@@ -104,7 +104,6 @@ class vehiclePage(tk.Frame):
             
             details = truckdb.fetch()
             global targetIndex
-            print(details)
             for i in range(len(details)):
                 if details[i][0] == targetVehicle.reg:
                     txt = details[i]
